@@ -1,6 +1,6 @@
 
 val Version = new {
-  val plugin  = "0.1.0-SNAPSHOT"
+  val plugin  = "0.1.0"
   val sbt13   = "0.13.6"
   val sbt10   = "1.1.0"
   val config  = "1.3.1"

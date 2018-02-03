@@ -19,15 +19,19 @@ object PConfPlugin extends AutoPlugin {
 
     val pconfConfigFile: SettingKey[File] =
       settingKey[File]("Project-specific pconf configuration file")
+
+    val pconfDefaultConfigPrefix: SettingKey[String] =
+      settingKey[String]("Prefix for configuration files to be loaded first (can be used to enforce a default config to be loaded first)")
   }
 
   import autoImport._
 
   override def projectSettings: Seq[Def.Setting[_]] = Seq(
+    pconfDefaultConfigPrefix := "",
     pconfConfigFile := baseDirectory.value / "project.conf",
 
     pconfConfigString :=
-    loadPackageConfigs((dependencyClasspath in Compile).value, pconfConfigFile.value)
+    loadPackageConfigs((dependencyClasspath in Compile).value, pconfConfigFile.value, pconfDefaultConfigPrefix.value)
       .foldLeft(""){ (s,in) =>
         s + "# SOURCE: "+in._1+"\n"+
         IO.readLines(new BufferedReader(new InputStreamReader(in._2))).mkString("\n") + "\n\n"
@@ -38,20 +42,20 @@ object PConfPlugin extends AutoPlugin {
   )
 
 
-  private def loadPackageConfigs(dependencyClasspath: Classpath, projectConfig: File): Seq[(String,InputStream)] =
-    loadDepPackageConfigs(dependencyClasspath) ++ loadProjectConfig(projectConfig)
+  private def loadPackageConfigs(dependencyClasspath: Classpath, projectConfig: File, defaultPrefix: String): Seq[(String,InputStream)] =
+    loadDepPackageConfigs(dependencyClasspath,defaultPrefix) ++ loadProjectConfig(projectConfig)
 
   private def loadProjectConfig(projectConfig: File): Option[(String,InputStream)] =
     if(projectConfig.canRead)
       Some((projectConfig.getAbsolutePath,fin(projectConfig)))
     else None
 
-  private def loadDepPackageConfigs(cp: Classpath): Seq[(String,InputStream)] = {
+  private def loadDepPackageConfigs(cp: Classpath, defaultPrefix: String): Seq[(String,InputStream)] = {
     val (dirs,jars) = cp.files.partition(_.isDirectory)
-    loadJarPackageConfigs(jars) // ++ loadDirPackageConfigs(dirs,log)
+    loadJarPackageConfigs(jars, defaultPrefix) // ++ loadDirPackageConfigs(dirs,log)
   }
 
-  private def loadJarPackageConfigs(jars: Seq[File]): Seq[(String,InputStream)] = {
+  private def loadJarPackageConfigs(jars: Seq[File], defaultPrefix: String): Seq[(String,InputStream)] = {
     val files = jars
       .map( f => (f.getName, new URL("jar:" + f.toURI + "!/package.conf").openConnection()) )
       .map {
@@ -64,13 +68,12 @@ object PConfPlugin extends AutoPlugin {
       .collect{
         case Some(in) => in
       }
-      // ensure that default configuration provided by sbt-node is loaded first
-      .partition(_._1.startsWith("sbt-node-config_"))
+      // ensure that default configuration is loaded first
+      .partition(_._1.startsWith(defaultPrefix))
     files._1 ++ files._2
   }
 
 
   private def fin(file: File): BufferedInputStream = new BufferedInputStream(new FileInputStream(file))
 
-//  private object DepBuilder extends DependencyBuilders
 }

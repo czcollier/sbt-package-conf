@@ -53,7 +53,8 @@ object PConfPlugin extends AutoPlugin {
 
 
   private def loadPackageConfigs(dependencyClasspath: Classpath, projectConfig: File, defaultPrefix: String, platform: Option[String]): Seq[(String,InputStream)] =
-    loadDepPackageConfigs(dependencyClasspath,defaultPrefix,platform) ++ loadProjectConfig(projectConfig)
+    loadDepPackageConfigs(dependencyClasspath,defaultPrefix,platform) ++
+      loadProjectConfig(projectConfig)
 
   private def loadProjectConfig(projectConfig: File): Option[(String,InputStream)] =
     if(projectConfig.canRead)
@@ -63,8 +64,21 @@ object PConfPlugin extends AutoPlugin {
   private def loadDepPackageConfigs(cp: Classpath, defaultPrefix: String, platform: Option[String]): Seq[(String,InputStream)] = {
     val (dirs,jars) = cp.files.partition(_.isDirectory)
     loadJarPackageConfigs(jars, defaultPrefix) ++
-      { if(platform.isDefined) loadJarPackageConfigs(jars,defaultPrefix,platform) else Nil }
-    //++ loadDirPackageConfigs(dirs,log)
+      { if(platform.isDefined) loadJarPackageConfigs(jars,defaultPrefix,platform) else Nil } ++
+    loadDirPackageConfigs(dirs) ++
+      {if(platform.isDefined) loadDirPackageConfigs(dirs,platform) else Nil}
+  }
+
+  private def loadDirPackageConfigs(dirs: Seq[File], suffix: Option[String] = None): Seq[(String,InputStream)] = {
+    val file = suffix.map("package_"+_+".conf").getOrElse("package.conf")
+    dirs map { dir =>
+      val path = new File(dir,file)
+      if(path.canRead)
+        Some((path.toString,new FileInputStream(path)))
+      else None
+    } collect {
+      case Some(p) => p
+    }
   }
 
   private def loadJarPackageConfigs(jars: Seq[File], defaultPrefix: String, suffix: Option[String] = None): Seq[(String,InputStream)] = {

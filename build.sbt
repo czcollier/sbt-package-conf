@@ -1,8 +1,8 @@
 
 val Version = new {
-  val plugin  = "0.1.1"
+  val plugin  = "0.2.0-SNAPSHOT"
   val sbt13   = "0.13.17"
-  val sbt10   = "1.2.7"
+  val sbt10   = "1.3.9"
   val config  = "1.3.1"
 }
 
@@ -15,10 +15,13 @@ val commonSettings = Seq(
 
 lazy val plugin = project
   .in(file("."))
+  .enablePlugins(SbtPlugin)
   .settings(commonSettings ++ publishingSettings: _*)
   .settings(
     name := "sbt-package-conf",
     sbtPlugin := true,
+    scriptedLaunchOpts += "-Dplugin.version=" + version.value,
+    scriptedBufferLog := false,
     libraryDependencies ++= Seq(
       "com.typesafe" % "config" % Version.config
       )
@@ -59,13 +62,8 @@ lazy val publishingSettings = Seq(
 lazy val dontPublish = Seq(
     publish := {},
     publishLocal := {},
-    com.typesafe.sbt.pgp.PgpKeys.publishSigned := {},
-    com.typesafe.sbt.pgp.PgpKeys.publishLocalSigned := {},
+    publish /skip := true,
     publishArtifact := false,
     publishTo := Some(Resolver.file("Unused transient repository",file("target/unusedrepo")))
   )
 
-lazy val scriptedSettings = ScriptedPlugin.scriptedSettings ++ Seq(
-  scriptedLaunchOpts += "-Dplugin.version=" + version.value,
-  scriptedBufferLog := false
-)

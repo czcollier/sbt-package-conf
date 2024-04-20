@@ -2,7 +2,7 @@
 val Version = new {
   val plugin  = "0.2.0-SNAPSHOT"
   val sbt13   = "0.13.17"
-  val sbt10   = "1.3.9"
+  val sbt10   = "1.9.9"
   val config  = "1.3.1"
 }
 
@@ -10,7 +10,8 @@ val commonSettings = Seq(
   version := Version.plugin,
   organization := "de.surfice",
   scalacOptions ++= Seq("-deprecation","-unchecked","-feature","-Xlint"),
-  crossSbtVersions := Seq(Version.sbt13, Version.sbt10)
+  crossSbtVersions := Seq(Version.sbt13, Version.sbt10),
+  crossScalaVersions := Seq("3.4.1")
 )
 
 lazy val plugin = project

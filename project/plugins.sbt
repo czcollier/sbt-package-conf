@@ -1,5 +1,5 @@
 addSbtPlugin("org.xerial.sbt" % "sbt-sonatype" % "3.9.2")
 
-addSbtPlugin("com.jsuereth" % "sbt-pgp" % "2.0.0")
+addSbtPlugin("com.github.sbt" % "sbt-pgp" % "2.2.1")
 
 //libraryDependencies += "org.scala-sbt" % "scripted-plugin" % sbtVersion.value
